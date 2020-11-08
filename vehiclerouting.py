@@ -1,127 +1,128 @@
+
 # -*- coding: utf-8 -*-
 """
-Title: Drone Routing
-Author: Tomaso De Ponti, Pietro Campolucci, Enerko Rodriguez Plaza
+@author: tdeponti
 """
-
-# Importing packages
+# Loading packages that are used in the code
 import numpy as np
 import os
 import pandas as pd
 import time
-from gurobipy import Model, GRB, LinExpr
+from gurobipy import Model,GRB,LinExpr
 import pickle
 from copy import deepcopy
-
-# Add debugging option
-DEBUG = True
 
 # Get path to current folder
 cwd = os.getcwd()
 print(cwd)
 # Get all instances
-full_list = os.listdir(cwd)
+full_list           = os.listdir(cwd)
 
 # instance name
-instance_name = 'database/pvr.xlsx'
+instance_name = 'pvr.xlsx'
 # Load data for this instance
-edges = pd.read_excel(os.path.join(cwd,instance_name),sheet_name='data')
+edges= pd.read_excel(os.path.join(cwd,instance_name),sheet_name='data')
 print("edges",edges)
 ### Model options ###
 droneFC= 5
 K=100
-
+custumerdemand=1
+maxpayload=3
+costperkm=0.5
+maxdrones=10
 startTimeSetUp = time.time()
 model = Model()
 #################
 ### VARIABLES ###
 #################
+xk = {}
+for k in range(1,maxdrones+1):
+    xk[k] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="xk[%s]" % (k))
 x = {}
-for i in range(0, len(edges)):
-    x[edges['From'][i], edges['To'][i]] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="x[%s,%s]" % (edges['From'][i], edges['To'][i]))
+for k in range(1,maxdrones+1):
+    for i in range(0, len(edges)):
+        x[edges['From'][i], edges['To'][i],k] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="x[%s,%s,%s]" % (edges['From'][i], edges['To'][i],k))
 print(x)
 s = {}
 for i in range(1, max(edges['From']+1)):
-    s[i] = model.addVar(lb=0,ub=100,vtype=GRB.INTEGER, name="s[%s]"%i)
+    for k in range(1, maxdrones + 1):
+        s[i,k] = model.addVar(lb=0,ub=100,vtype=GRB.INTEGER, name="s[%s,%s]"%(i,k))
 model.update()
 
 ###################
 ### CONSTRAINTS ###
 ###################
-
-source = 100
-sink   = 25
-sinko   = 1
 print(len(edges) - 1)
 print(edges['From'][len(edges) - 1])
 print(range(1, edges['From'][len(edges) - 1]))
 #for i in range(1, edges['From'][len(edges) - 1]):
+
 for i in range(1, max(edges['From']+1)):
     print("Node",i)
     idx_this_node_out = np.where(edges['From'] == i)[0]
     idx_this_node_in = np.where(edges['To'] == i)[0]
     print("idx_this_node_out",idx_this_node_out)
     print("idx_this_node_in", idx_this_node_in)
-    if i != source and i != sink:
-        thisLHS = LinExpr()
-        if len(idx_this_node_out) > 0:
-            for j in range(0, len(idx_this_node_out)):
-                thisLHS += x[i, edges['To'][idx_this_node_out[j]]]
-
-        if len(idx_this_node_in) > 0:
-            for j in range(0, len(idx_this_node_in)):
-                thisLHS -= x[edges['From'][idx_this_node_in[j]], i]
-        model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,
-                        name='node_flow_' + str(i))
-    if i is source:
-        thisLHS = LinExpr()
-        if len(idx_this_node_out) > 0:
-            for j in range(0, len(idx_this_node_out)):
-                thisLHS += x[i, edges['To'][idx_this_node_out[j]]]
-        model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=1,name='node_' + str(i) + '_source_out')
-
-        thisLHS = LinExpr()
-        if len(idx_this_node_in) > 0:
-            for j in range(0, len(idx_this_node_in)):
-                thisLHS += x[edges['From'][idx_this_node_in[j]], i]
-            model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=1,name='node_' + str(i) + '_source_in')
-
-    if i is sink:
-        thisLHS = LinExpr()
-        if len(idx_this_node_in) > 0:
-            for j in range(0, len(idx_this_node_in)):
-                thisLHS += x[edges['From'][idx_this_node_in[j]], i]
-            model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=1,
-                                name='node_' + str(i) + '_sink_in')
-        thisLHS = LinExpr()
-        if len(idx_this_node_out) > 0:
-            for j in range(0, len(idx_this_node_out)):
-                thisLHS += x[i, edges['To'][idx_this_node_out[j]]]
-            model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,
-                                name='node_' + str(i) + '_sink_out')
 
     thisLHS = LinExpr()
     if len(idx_this_node_out) > 0:
-        for j in range(0, len(idx_this_node_out)):
-            thisLHS += x[i, edges['To'][idx_this_node_out[j]]]
-        model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=1, name='node_out_' + str(i))
-    thisLHS = LinExpr()
+        for k in range(1, maxdrones + 1):
+            for j in range(0, len(idx_this_node_out)):
+                thisLHS += x[i, edges['To'][idx_this_node_out[j]],k]
+                thisLHS -= x[edges['From'][idx_this_node_in[j]], i, k]
+            model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,name='node_flow_' + str(i)+str(k))
     # if len(idx_this_node_in) > 0:
     #     for j in range(0, len(idx_this_node_in)):
-    #         thisLHS += x[edges['From'][idx_this_node_in[j]], i]
-    #     model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=1, name='node_in_' + str(i))
+    #         for k in range(1, maxdrones + 1):
+    #             thisLHS -= x[edges['From'][idx_this_node_in[j]], i,k]
+    # model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,
+    #                     name='node_flow_' + str(i))
+    thisLHS = LinExpr()
+    if i > 1:
+        for j in range(0, len(idx_this_node_out)):
+            for k in range(1, maxdrones + 1):
+                thisLHS += x[i, edges['To'][idx_this_node_out[j]],k]
+        model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=1, name='node_out_' + str(i))
+
+
+for k in range(1, maxdrones + 1):
+    thisLHS1 = LinExpr()
+    thisLHS2 = LinExpr()
+    thisLHS = LinExpr()
+    for i in range(1, max(edges['From'] + 1)):
+        if i != 1:
+            thisLHS1+= x[1,i,k]
+            thisLHS2+= x[i,1,k]
+        for j in range(1, max(edges['From'] + 1)):
+            if j != i:
+                thisLHS+= x[i,j,k]
+    thisLHS = thisLHS*custumerdemand
+    thisLHS1 -= xk[k]
+    thisLHS2 -= xk[k]
+    model.addConstr(lhs=thisLHS1, sense=GRB.EQUAL, rhs=0, name='drone_out_' + str(k))
+    model.addConstr(lhs=thisLHS2, sense=GRB.EQUAL, rhs=0, name='drone_in_' + str(k))
+    model.addConstr(lhs=thisLHS, sense=GRB.LESS_EQUAL, rhs=maxpayload, name='drone_payload_' + str(k))
+
+
+
+
+
+
+
+thisLHS = LinExpr()
 count = 0
 for i in range(1, max(edges['From']+1)):
     for j in range (1, max(edges['From']+1)):
         print(count)
         if i != j & j!=1:
-            #can add here an if for impossible edges
-            thisLHS= LinExpr()
-            thisLHS= s[i]-s[j]+edges['Distance'][count]-K*(1-x[i,j])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
-            print(thisLHS)
-            print("i",i)
-            print("j",j)
-            model.addConstr(lhs=thisLHS, sense = GRB.LESS_EQUAL, rhs=0, name='time_' + str(i)+str(j))
+            for k in range(1, maxdrones + 1):
+                #can add here an if for impossible edges
+                thisLHS= LinExpr()
+                thisLHS= s[i,k]-s[j,k]+edges['Distance'][count]-K*(1-x[i,j,k])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
+                print(thisLHS)
+                print("i",i)
+                print("j",j)
+                model.addConstr(lhs=thisLHS, sense = GRB.LESS_EQUAL, rhs=0, name='time_' + str(i)+str(j)+str(k))
             count = count + 1
 
 
@@ -129,24 +130,33 @@ model.update()
 obj = LinExpr()
 
 for i in range(0, len(edges)):
-    obj += edges['Distance'][i] * x[edges['From'][i], edges['To'][i]]
+    for k in range(1, maxdrones + 1):
+        obj += edges['Distance'][i] * x[edges['From'][i], edges['To'][i],k]*costperkm
+for k in range(1,maxdrones+1):
+    obj += xk[k]*droneFC
+
+
 
 model.setObjective(obj, GRB.MINIMIZE)
 model.update()
-model.write('LPSolve/model_formulation2.lp')
+model.write('model_formulation2.lp')
 
 model.optimize()
 endTime = time.time()
 
 solution = []
+activedrones =[]
 
 for v in model.getVars():
     if v.x==1:
         solution.append([v.varName])
+    #if v.xk==1:
+    #    activedrones.append([v.varName])
+print(activedrones)
 print(solution)
+
 route_complete = False
-current_node = source
-path = [source]
+
 
 # while route_complete is False:
 #     # Connections from current node
