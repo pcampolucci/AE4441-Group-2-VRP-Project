@@ -1,16 +1,20 @@
-
 # -*- coding: utf-8 -*-
 """
-@author: tdeponti
+Title: Drone Routing
+Author: Tomaso De Ponti, Pietro Campolucci, Enerko Rodriguez Plaza
 """
-# Loading packages that are used in the code
+
+# Importing packages
 import numpy as np
 import os
 import pandas as pd
 import time
-from gurobipy import Model,GRB,LinExpr
+from gurobipy import Model, GRB, LinExpr
 import pickle
 from copy import deepcopy
+
+# Add debugging option
+DEBUG = True
 
 # Get path to current folder
 cwd = os.getcwd()
@@ -21,7 +25,7 @@ full_list = os.listdir(cwd)
 # instance name
 instance_name = 'database/pvr.xlsx'
 # Load data for this instance
-edges= pd.read_excel(os.path.join(cwd,instance_name),sheet_name='data')
+edges = pd.read_excel(os.path.join(cwd,instance_name),sheet_name='data')
 print("edges",edges)
 ### Model options ###
 droneFC= 5
