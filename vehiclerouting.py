@@ -30,6 +30,9 @@ custumerdemand=1
 maxpayload=3
 costperkm=0.5
 maxdrones=10
+maxrange=15
+
+
 startTimeSetUp = time.time()
 model = Model()
 #################
@@ -42,7 +45,7 @@ x = {}
 for k in range(1,maxdrones+1):
     for i in range(0, len(edges)):
         x[edges['From'][i], edges['To'][i],k] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="x[%s,%s,%s]" % (edges['From'][i], edges['To'][i],k))
-print(x)
+
 s = {}
 for i in range(1, max(edges['From']+1)):
     for k in range(1, maxdrones + 1):
@@ -61,8 +64,6 @@ for i in range(1, max(edges['From']+1)):
     print("Node",i)
     idx_this_node_out = np.where(edges['From'] == i)[0]
     idx_this_node_in = np.where(edges['To'] == i)[0]
-    print("idx_this_node_out",idx_this_node_out)
-    print("idx_this_node_in", idx_this_node_in)
 
     thisLHS = LinExpr()
     if len(idx_this_node_out) > 0:
@@ -89,6 +90,8 @@ for k in range(1, maxdrones + 1):
     thisLHS1 = LinExpr()
     thisLHS2 = LinExpr()
     thisLHS = LinExpr()
+    thisrangeLHS = LinExpr()
+    count=0
     for i in range(1, max(edges['From'] + 1)):
         if i != 1:
             thisLHS1+= x[1,i,k]
@@ -96,12 +99,15 @@ for k in range(1, maxdrones + 1):
         for j in range(1, max(edges['From'] + 1)):
             if j != i:
                 thisLHS+= x[i,j,k]
+                thisrangeLHS+= x[i,j,k]*edges['Distance'][count]
+                count+= 1
     thisLHS = thisLHS*custumerdemand
     thisLHS1 -= xk[k]
     thisLHS2 -= xk[k]
     model.addConstr(lhs=thisLHS1, sense=GRB.EQUAL, rhs=0, name='drone_out_' + str(k))
     model.addConstr(lhs=thisLHS2, sense=GRB.EQUAL, rhs=0, name='drone_in_' + str(k))
     model.addConstr(lhs=thisLHS, sense=GRB.LESS_EQUAL, rhs=maxpayload, name='drone_payload_' + str(k))
+    model.addConstr(lhs=thisrangeLHS, sense=GRB.LESS_EQUAL, rhs=maxrange, name='drone_range_' + str(k))
 
 
 
@@ -119,9 +125,7 @@ for i in range(1, max(edges['From']+1)):
                 #can add here an if for impossible edges
                 thisLHS= LinExpr()
                 thisLHS= s[i,k]-s[j,k]+edges['Distance'][count]-K*(1-x[i,j,k])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
-                print(thisLHS)
-                print("i",i)
-                print("j",j)
+
                 model.addConstr(lhs=thisLHS, sense = GRB.LESS_EQUAL, rhs=0, name='time_' + str(i)+str(j)+str(k))
             count = count + 1
 
