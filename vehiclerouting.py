@@ -16,13 +16,15 @@ from copy import deepcopy
 cwd = os.getcwd()
 print(cwd)
 # Get all instances
-full_list           = os.listdir(cwd)
+full_list = os.listdir(cwd)
 
 # instance name
 instance_name = 'pvr.xlsx'
+
 # Load data for this instance
-edges= pd.read_excel(os.path.join(cwd,instance_name),sheet_name='data')
-print("edges",edges)
+edges= pd.read_excel(os.path.join(cwd, instance_name), sheet_name='data')
+print("edges", edges)
+
 ### Model options ###
 droneFC= 5
 K=100
@@ -32,9 +34,9 @@ costperkm=0.5
 maxdrones=10
 maxrange=15
 
-
 startTimeSetUp = time.time()
 model = Model()
+
 #################
 ### VARIABLES ###
 #################
@@ -108,11 +110,6 @@ for k in range(1, maxdrones + 1):
     model.addConstr(lhs=thisLHS2, sense=GRB.EQUAL, rhs=0, name='drone_in_' + str(k))
     model.addConstr(lhs=thisLHS, sense=GRB.LESS_EQUAL, rhs=maxpayload, name='drone_payload_' + str(k))
     model.addConstr(lhs=thisrangeLHS, sense=GRB.LESS_EQUAL, rhs=maxrange, name='drone_range_' + str(k))
-
-
-
-
-
 
 
 thisLHS = LinExpr()
