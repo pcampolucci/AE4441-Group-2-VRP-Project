@@ -21,8 +21,8 @@ print(cwd)
 # Get all instances
 full_list = os.listdir(cwd)
 
-instance_name ='/pvrold.xlsx'
-#instance_name = '/database/pvr.xlsx'
+#instance_name ='/pvrold.xlsx'
+instance_name = '/database/pvr.xlsx'
 #instance_name = '/pvr.xlsx'
 # Load data for this instance
 edges= pd.read_excel(cwd + instance_name, sheet_name='data')
@@ -30,12 +30,12 @@ print("edges", edges)
 
 ### Model options ###
 droneFC= 5
-K=100
+K=300
 custumerdemand=1
-maxpayload=3
+maxpayload=5
 costperkm=0.5
-maxdrones=10
-maxrange=200
+maxdrones=25
+maxrange=800
 speed=150
 takeofftime=2
 landingtime=2
@@ -50,17 +50,22 @@ maxnode = max(edges['From']+1)
 #################
 ### VARIABLES ###
 #################
-
+#xij = {}
 xk = {}
 x = {}
+# for i in range(1,maxnode):
+#     for j in range(1,maxnode):
+#         if i != j:
+#             xij[i,j] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name="xij[%s,%s]"%(i,j))
 for k in range(1,maxdrones+1):
     xk[k] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="xk[%s]" % (k))
     for i in range(0, len(edges)):
         x[edges['From'][i], edges['To'][i],k] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="x[%s,%s,%s]" % (edges['From'][i], edges['To'][i],k))
+
 s = {}
 for i in range(1, max(edges['From']+1)):
     for k in range(1, maxdrones + 1):
-        s[i,k] = model.addVar(lb=0,ub=K,vtype=GRB.INTEGER,name="s[%s,%s]"%(i,k))
+        s[i,k] = model.addVar(lb=0,ub=K,vtype=GRB.CONTINUOUS,name="s[%s,%s]"%(i,k))
 model.update()
 
 ###################
@@ -126,11 +131,19 @@ for i in range(1, max(edges['From']+1)):
             for k in range(1, maxdrones + 1):
                 #can add here an if for impossible edges
                 thisLHS= LinExpr()
-                thisLHS= s[i,k]-s[j,k]+((edges['Distance'][count])*speed/60+takeofftime+landingtime+unloadingtime)-K*(1-x[i,j,k])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
+                thisLHS= s[i,k]-s[j,k]+((edges['Distance'][count])/speed*60+takeofftime+landingtime+unloadingtime)-K*(1-x[i,j,k])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
 
                 model.addConstr(lhs=thisLHS, sense = GRB.LESS_EQUAL, rhs=0, name='time_' + str(i)+"i"+str(j)+"j"+str(k)+"k")
             count = count + 1
 
+# for i in range(1,maxnode):
+#     for j in range(1,maxnode):
+#         if i != j:
+#             thisLHS= LinExpr()
+#             for k in range(1,maxdrones):
+#                 thisLHS += x[i,j,k]
+#             thisLHS -= xij[i,j]
+#             model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,name='time_new_' + str(i) + "i" + str(j) + "j" )
 
 model.update()
 obj = LinExpr()
@@ -143,6 +156,14 @@ for i in range(1, maxnode):
             count += 1
 for k in range(1,maxdrones+1):
     obj += xk[k]*droneFC
+
+# for i in range(1, maxnode):
+#     for j in range(1,maxnode):
+#         if i != j:
+#             obj += edges['Distance'][count] * xij[i,j]*costperkm #+ s[i,k]
+#             count += 1
+# for k in range(1,maxdrones+1):
+#     obj += xk[k]*droneFC
 
 
 
