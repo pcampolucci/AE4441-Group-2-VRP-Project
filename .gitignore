@@ -6,7 +6,9 @@ __pycache__/
 # C extensions
 *.so
 # Tomaso addition
-.idea/
+.idea/*
+.idea/AE4441-Group-2-VRP-Project.iml
+.idea/misc.xml
 
 # Distribution / packaging
 .Python
