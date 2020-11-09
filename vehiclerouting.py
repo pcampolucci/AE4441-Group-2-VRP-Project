@@ -11,6 +11,7 @@ import time
 from gurobipy import Model,GRB,LinExpr
 import pickle
 from copy import deepcopy
+from plotter import do_plot
 
 # Get path to current folder
 cwd = os.getcwd()
@@ -19,10 +20,10 @@ print(cwd)
 full_list = os.listdir(cwd)
 
 # instance name
-instance_name = 'pvr.xlsx'
+instance_name = '\pvr.xlsx'
 
 # Load data for this instance
-edges= pd.read_excel(os.path.join(cwd, instance_name), sheet_name='data')
+edges= pd.read_excel(cwd + instance_name, sheet_name='data')
 print("edges", edges)
 
 ### Model options ###
@@ -156,7 +157,29 @@ for v in model.getVars():
 print(activedrones)
 print(solution)
 
+
+def solution_to_excel(solution):
+
+    solution_df = pd.DataFrame(columns=["From", "To", "Drone"])
+
+    for edge in solution:
+        if str(edge[0][:2]) != 'xk':
+            i_clean = edge[0][2:-1].split(",")
+            from_node = i_clean[0]
+            to_node = i_clean[1]
+            drone_id = i_clean[2]
+            solution_df.loc[-1] = [from_node, to_node, drone_id]
+            solution_df.index += 1
+            solution_df = solution_df.sort_index()
+            solution_df = solution_df.iloc[::-1]
+
+    solution_df.to_excel(cwd + "\database\solution.xlsx", 'data')
+
+
 route_complete = False
+
+do_plot()
+solution_to_excel(solution)
 
 
 # while route_complete is False:

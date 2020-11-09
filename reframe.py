@@ -10,8 +10,8 @@ import os
 
 # get files and path information
 cwd = os.getcwd()
-database = "\database\\nodes.xlsx"
-target = "\database\\pvr_n.xlsx"
+database = "\database\\start.xlsx"
+target = "\database\\pvr.xlsx"
 
 # build start and end data frames
 map_df = pd.read_excel(cwd + database)
@@ -29,5 +29,8 @@ for i in range(len(map_df)):
             distance_df.loc[-1] = [from_node, to_node, tot_distance]
             distance_df.index += 1
             distance_df = distance_df.sort_index()
+            distance_df = distance_df.iloc[::-1]
 
-distance_df.to_excel(cwd+target)
+distance_df.to_excel(cwd+target, 'data')
+
+print("Excel file ready")

@@ -1,0 +1,64 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>pydeck</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" />
+    <script src=https://cdn.jsdelivr.net/npm/@deck.gl/jupyter-widget@~8.1.*/dist/index.js></script>
+    <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #deck-map-container {
+      width: 100%;
+      height: 100%;
+      background-color: black;
+    }
+
+    #map {
+      pointer-events: none;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      z-index: 1;
+    }
+
+    #deckgl-overlay {
+      z-index: 2;
+      background: none;
+    }
+
+    #deck-map-wrapper {
+      width: 100%;
+      height: 100%;
+    }
+
+    #deck-container {
+      width: 100vw;
+      height: 100vh;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="deck-container">
+    </div>
+  </body>
+  <script>
+    const jsonInput = {"initialViewState": {"bearing": -20, "latitude": 7.87, "longitude": 80.6, "pitch": 50, "zoom": 7}, "layers": [{"@@type": "ScatterplotLayer", "data": [{"color": [0, 255, 255], "id": 1, "lat": 6.68463, "long": 80.734309, "name": "base (id: 1)", "size": 5, "type": "base"}, {"color": [255, 140, 0], "id": 2, "lat": 7.474812, "long": 81.117546, "name": "hospital (id: 2)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 3, "lat": 7.498072, "long": 80.361705, "name": "hospital (id: 3)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 4, "lat": 8.700388, "long": 80.481059, "name": "hospital (id: 4)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 5, "lat": 6.188803, "long": 80.519159, "name": "hospital (id: 5)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 6, "lat": 6.299418, "long": 81.054685, "name": "hospital (id: 6)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 7, "lat": 6.496502, "long": 80.776137, "name": "hospital (id: 7)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 8, "lat": 6.755147, "long": 80.971558, "name": "hospital (id: 8)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 9, "lat": 6.978419, "long": 81.246235, "name": "hospital (id: 9)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 10, "lat": 7.420607, "long": 81.590763, "name": "hospital (id: 10)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 11, "lat": 7.018444, "long": 80.760429, "name": "hospital (id: 11)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 12, "lat": 7.061506, "long": 80.500652, "name": "hospital (id: 12)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 13, "lat": 7.221319, "long": 80.055323, "name": "hospital (id: 13)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 14, "lat": 7.326103, "long": 79.904257, "name": "hospital (id: 14)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 15, "lat": 7.499714, "long": 80.62479, "name": "hospital (id: 15)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 16, "lat": 7.565966, "long": 80.52242, "name": "hospital (id: 16)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 17, "lat": 7.698172, "long": 79.838475, "name": "hospital (id: 17)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 18, "lat": 8.016468, "long": 80.920919, "name": "hospital (id: 18)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 19, "lat": 8.655363, "long": 81.08554, "name": "hospital (id: 19)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 20, "lat": 8.838268, "long": 80.487303, "name": "hospital (id: 20)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 21, "lat": 9.183346, "long": 80.741311, "name": "hospital (id: 21)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 22, "lat": 9.360379, "long": 80.39171, "name": "hospital (id: 22)", "size": 3, "type": "hospital"}, {"color": [255, 140, 0], "id": 23, "lat": 8.884301, "long": 79.986798, "name": "hospital (id: 23)", "size": 3, "type": "hospital"}], "filled": true, "getFillColor": "@@=color", "getLineColor": [0, 0, 0], "getPosition": "@@=[long, lat]", "getRadius": "@@=exits_radius", "id": "fd93a3ff-1505-49ab-87ee-9e3a7482377d", "lineWidthMinPixels": 1, "opacity": 0.8, "pickable": true, "radiusMaxPixels": 100, "radiusMinPixels": 10, "radiusScale": 100, "stroked": true}, {"@@type": "ArcLayer", "autoHighlight": true, "data": [{"lat_s": 7.420607, "lat_t": 6.68463, "lng_s": 81.590763, "lng_t": 80.734309}, {"lat_s": 6.755147, "lat_t": 7.420607, "lng_s": 80.971558, "lng_t": 81.590763}, {"lat_s": 6.496502, "lat_t": 6.755147, "lng_s": 80.776137, "lng_t": 80.971558}, {"lat_s": 7.326103, "lat_t": 6.496502, "lng_s": 79.904257, "lng_t": 80.776137}, {"lat_s": 7.474812, "lat_t": 7.326103, "lng_s": 81.117546, "lng_t": 79.904257}, {"lat_s": 6.68463, "lat_t": 7.474812, "lng_s": 80.734309, "lng_t": 81.117546}], "getSourceColor": [240, 100, 0, 100], "getSourcePosition": "@@=[lng_s, lat_s]", "getTargetColor": [0, 255, 0, 100], "getTargetPosition": "@@=[lng_t, lat_t]", "getTilt": 15, "getWidth": 5, "id": "6147ed05-2f8d-4fcd-91a3-22360e4f656c", "pickable": false}], "mapStyle": "mapbox://styles/mapbox/dark-v9", "views": [{"@@type": "MapView", "controller": true}]};
+    const MAPBOX_API_KEY = 'pk.eyJ1IjoicGNhbXBvbHVjY2kiLCJhIjoiY2toYTg2bTFxMGg3aTJ5bGhwZWhmMDg0bCJ9.ViTFJLTd8KTj_8MZK0zYWA';
+    const tooltip = {'html': '<b>{type} ID:</b> {id}', 'style': {'color': 'white'}};
+    const customLibraries = null;
+
+    const deck = createDeck({
+      mapboxApiKey: MAPBOX_API_KEY,
+      container: document.getElementById('deck-container'),
+      jsonInput,
+      tooltip,
+      customLibraries
+    });
+
+  </script>
+</html>
