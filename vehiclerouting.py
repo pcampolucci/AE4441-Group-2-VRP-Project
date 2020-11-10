@@ -11,19 +11,25 @@ import pandas as pd
 import time
 from gurobipy import Model,GRB,LinExpr
 import pickle
-from copy import deepcopy
 
-#from plotter import do_plot
+
+from plotter import do_plot
 
 # Get path to current folder
 cwd = os.getcwd()
 print(cwd)
 # Get all instances
 full_list = os.listdir(cwd)
-
+###MAC####
 #instance_name ='/pvrold.xlsx'
-instance_name = '/database/pvr.xlsx'
+#instance_name = '/database/pvr.xlsx'
 #instance_name = '/pvr.xlsx'
+
+####Windows###
+#instance_name ='/pvrold.xlsx'
+instance_name = '\database\pvr.xlsx'
+#instance_name = '/pvr.xlsx'
+
 # Load data for this instance
 edges= pd.read_excel(cwd + instance_name, sheet_name='data')
 print("edges", edges)
@@ -205,8 +211,8 @@ def solution_to_excel(solution):
 
 #Comment out because not working
 
-#do_plot()
-#solution_to_excel(solution)
+do_plot()
+solution_to_excel(solution)
 
 
 
