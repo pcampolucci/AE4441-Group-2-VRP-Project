@@ -13,22 +13,29 @@ import pydeck as pdk
 # debugging option
 DEBUG = False
 
-def do_plot():
+
+def plot_map():
 
     # get databases for initial map and optimal computed solution
     cwd = os.getcwd()
-    database = "\database\\start.xlsx"
+    database = "\database\\nodes.xlsx"
     solution = "\database\\solution.xlsx"
 
     # augment properties of nodes for better understanding of the scenario
     node_dict = {
-        'hospital': {'type': 'hospital', 'size': 3, 'color': [255, 140, 0]},
-        'base': {'type': 'base', 'size': 5, 'color': [0, 255, 255]}
+        'hospital': {'type': 'hospital',
+                     'size': 3,
+                     'color0': [65, 252, 3],
+                     'color1': [252, 186, 3],
+                     'color2': [252, 32, 3]},
+        'base': {'type': 'base',
+                 'size': 5,
+                 'color0': [0,0,0]}
     }
 
     start_df = pd.read_excel(cwd + database)
     start_df['size'] = start_df.apply(lambda row: node_dict[row['type']]['size'], axis=1)
-    start_df['color'] = start_df.apply(lambda row: node_dict[row['type']]['color'], axis=1)
+    start_df['color'] = start_df.apply(lambda row: node_dict[row['type']][f'color{row["priority"]}'], axis=1)
     start_df['name'] = start_df['type'] + ' (id: ' + start_df['id'].astype(str) + ')'
 
     # build data frame for arc plotting based on solution
@@ -46,6 +53,8 @@ def do_plot():
         distance_df_adapted.loc[-1] = distance_df_row
         distance_df_adapted.index += 1
         distance_df_adapted = distance_df_adapted.sort_index()
+
+    print("Plotting solution")
 
     # Build layer for notes plotting
     layer = pdk.Layer(
@@ -66,8 +75,6 @@ def do_plot():
     )
 
     # Build layer for path connection, based on solution
-    GREEN_RGB = [0, 255, 0, 100]
-    RED_RGB = [240, 100, 0, 100]
     arc_layer = pdk.Layer(
         "ArcLayer",
         data=distance_df_adapted,
@@ -75,8 +82,8 @@ def do_plot():
         get_source_position=["lng_s", "lat_s"],
         get_target_position=["lng_t", "lat_t"],
         get_tilt=15,
-        get_source_color=RED_RGB,
-        get_target_color=GREEN_RGB,
+        get_source_color=[25, 250, 224],
+        get_target_color=[25, 36, 250],
         pickable=False,
         auto_highlight=True,
     )
@@ -94,6 +101,7 @@ def do_plot():
     # Combined all of it and render a viewport
     r = pdk.Deck(
         layers=[layer, arc_layer],
+        map_style="mapbox://styles/mapbox/light-v9",
         initial_view_state=view_state,
         tooltip={"html": '<b>{type} ID:</b> {id}', "style": {"color": "white"}},
         mapbox_key='pk.eyJ1IjoicGNhbXBvbHVjY2kiLCJhIjoiY2toYTg2bTFxMGg3aTJ5bGhwZWhmMDg0bCJ9.ViTFJLTd8KTj_8MZK0zYWA'
@@ -104,4 +112,4 @@ def do_plot():
 
 
 if DEBUG:
-    do_plot()
+    plot_map()
