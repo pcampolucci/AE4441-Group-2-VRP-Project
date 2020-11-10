@@ -10,10 +10,8 @@ import os
 import pandas as pd
 import time
 from gurobipy import Model,GRB,LinExpr
-import pickle
 
-
-#from plotter import do_plot
+#from plotter import do_plot   #Pietro can use this
 
 # Get path to current folder
 cwd = os.getcwd()
@@ -22,53 +20,53 @@ print(cwd)
 full_list = os.listdir(cwd)
 
 ####-----MAC---------####
+
+instance_name = '/database/simplerealnodes.xlsx'
 #instance_name ='/pvrold.xlsx'
 #instance_name = '/database/pvr.xlsx'
-instance_name = '/database/simplerealnodes.xlsx'
 #instance_name = '/pvr.xlsx'
 
-####----Windows-----####
-#instance_name ='/pvrold.xlsx'
+####----Windows-----####(For Pietro use first link)
+
+#instance_name = '\database\simplerealnodes.xlsx'
 #instance_name = '\database\pvr.xlsx'
-#instance_name = '/pvr.xlsx'
+
 
 # Load data for this instance
 edges= pd.read_excel(cwd + instance_name, sheet_name='data')
 print("edges", edges)
 
-### Model options ###
-droneFC= 5
-K=300
-custumerdemand=1
-maxpayload=5
-costperkm=0.5
-maxdrones=25
-maxrange=800
-speed=150
-takeofftime=2
-landingtime=2
-unloadingtime=5
-depots = [1,2]
-
+###------Model options------###
+droneFC= 5           # Drone fixed cost
+K=300                # Time upperbound
+custumerdemand=1     # Number of blood bags required by the hospitals
+maxpayload=5         # Maximum numbers of blood bags the drone can carry
+costperkm=0.5        # Run cost of drone [€/km]
+maxdrones=25         # Maximum number of drones
+maxrange=800         # Maximum range of the drone [km]
+speed=150            # Cruise speed of the drone [km/h]
+takeofftime=2        # Time to complete take-off [min]
+landingtime=2        # Time to complete landing [min]
+unloadingtime=5      # Time to unload payload [min]
+depots = [1,2]       # Number and Name of depots (base) - Must be in ascending order
+priorityweight = 1   # Weighting factor of the priority objective
 
 
 startTimeSetUp = time.time()
 model = Model()
 maxnode = max(edges['From']+1)
 ####################-----VARIABLES-----####################
-#xij = {}
+
+######---Generate drone and edges variables xk and x------######
 xk = {}
 x = {}
-# for i in range(1,maxnode):
-#     for j in range(1,maxnode):
-#         if i != j:
-#             xij[i,j] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name="xij[%s,%s]"%(i,j))
 for k in range(1,maxdrones+1):
     for base in depots:
         xk[k,base] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="xk[%s,%s]" % (k,base))
     for i in range(0, len(edges)):
         x[edges['From'][i], edges['To'][i],k] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="x[%s,%s,%s]" % (edges['From'][i], edges['To'][i],k))
 
+######---Generate time variable s ------######
 s = {}
 for i in range(1, max(edges['From']+1)):
     for k in range(1, maxdrones + 1):
@@ -76,9 +74,6 @@ for i in range(1, max(edges['From']+1)):
 model.update()
 
 ###################### CONSTRAINTS ######################
-#print(len(edges) - 1)
-#print(edges['From'][len(edges) - 1])
-#print(range(1, edges['From'][len(edges) - 1]))
 
 ####----Flow and Travelling salesman constraint-----#######
 for i in range(1, maxnode):
@@ -91,12 +86,6 @@ for i in range(1, maxnode):
             thisLHS += x[i, edges['To'][idx_this_node_out[j]],k]
             thisLHS -= x[edges['From'][idx_this_node_in[j]], i, k]
         model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,name='node_flow_' + str(i)+"i"+str(k)+"k")
-    # if len(idx_this_node_in) > 0:
-    #     for j in range(0, len(idx_this_node_in)):
-    #         for k in range(1, maxdrones + 1):
-    #             thisLHS -= x[edges['From'][idx_this_node_in[j]], i,k]
-    # model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,
-    #                     name='node_flow_' + str(i))
     thisLHS = LinExpr()
     if i > 1:
         for j in range(0, len(idx_this_node_out)):
@@ -123,6 +112,7 @@ for k in range(1, maxdrones + 1):
 for k in range(1, maxdrones + 1):
     thisLHS1 = LinExpr()
     thisLHS2 = LinExpr()
+    thisLHSunique = LinExpr()
     for base in depots:
         for i in range(max(depots)+1, max(edges['From'] + 1)):
             thisLHS1 += x[base, i, k]
@@ -131,7 +121,8 @@ for k in range(1, maxdrones + 1):
         thisLHS2 -= xk[k,base]
         model.addConstr(lhs=thisLHS1, sense=GRB.EQUAL, rhs=0, name='drone'+ str(k)+'out_base_' + str(base))
         model.addConstr(lhs=thisLHS2, sense=GRB.EQUAL, rhs=0, name='drone'+ str(k)+'in_base_' + str(base))
-
+        thisLHSunique += xk[k,base]
+    model.addConstr(lhs=thisLHSunique, sense=GRB.LESS_EQUAL, rhs=1, name='drone' + str(k) + 'only_in_one_base_')
 
 ####----Time constraints to avoid inner loops-----####
 thisLHS = LinExpr()
@@ -159,18 +150,10 @@ for i in range(1, maxnode):
                 obj += edges['Distance'][count] * x[i,j,k]*costperkm #+ s[i,k]
             count += 1
 for k in range(1,maxdrones+1):
+    for i in range(max(depots)+1,maxnode):
+        obj += s[i,k]*edges['Priority'][np.where(edges['From']== i)[0][1]]*priorityweight
     for base in depots:
         obj += xk[k,base]*droneFC
-
-# for i in range(1, maxnode):
-#     for j in range(1,maxnode):
-#         if i != j:
-#             obj += edges['Distance'][count] * xij[i,j]*costperkm #+ s[i,k]
-#             count += 1
-# for k in range(1,maxdrones+1):
-#     obj += xk[k]*droneFC
-
-
 
 model.setObjective(obj, GRB.MINIMIZE)
 model.update()
@@ -185,10 +168,8 @@ fullsolution = []
 solution = []
 for v in model.getVars():
     fullsolution.append([v.varName, v.x])
-    if v.x==1:
+    if v.x!=0:
         solution.append([v.varName])
-    #if v.xk==1:
-    #    activedrones.append([v.varName])
 print(solution)
 #print(fullsolution)
 
@@ -213,11 +194,43 @@ def solution_to_excel(solution):
     solution_df.to_excel(cwd + "\database\solution.xlsx", 'data')
 
 
-#Comment out because not working
-
+####----Pietro's plotting part---#######
 #do_plot()
 #solution_to_excel(solution)
 
 
 
 
+#######-------Archive---------##########
+
+#Variables:
+
+# xij = {}
+# for i in range(1,maxnode):
+#     for j in range(1,maxnode):
+#         if i != j:
+#             xij[i,j] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name="xij[%s,%s]"%(i,j))
+
+#Constraints:
+  # if len(idx_this_node_in) > 0:
+    #     for j in range(0, len(idx_this_node_in)):
+    #         for k in range(1, maxdrones + 1):
+    #             thisLHS -= x[edges['From'][idx_this_node_in[j]], i,k]
+    # model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,
+    #                     name='node_flow_' + str(i))
+
+#Objective Function:
+
+# for i in range(1, maxnode):
+#     for j in range(1,maxnode):
+#         if i != j:
+#             obj += edges['Distance'][count] * xij[i,j]*costperkm #+ s[i,k]
+#             count += 1
+# for k in range(1,maxdrones+1):
+#     obj += xk[k]*droneFC
+
+
+
+#print(len(edges) - 1)
+#print(edges['From'][len(edges) - 1])
+#print(range(1, edges['From'][len(edges) - 1]))
