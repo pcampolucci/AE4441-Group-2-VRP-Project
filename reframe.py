@@ -5,11 +5,13 @@ Author: Pietro Campolucci
 """
 
 # import packages
+import numpy as np
+from math import *
 import pandas as pd
 import os
 
 
-def reframe_nodes():
+def reframe_nodes(V_wind=5):
 
     # get files and path information
     cwd = os.getcwd()
@@ -20,7 +22,7 @@ def reframe_nodes():
 
     # build start and end data frames
     map_df = pd.read_excel(cwd + database)
-    distance_df = pd.DataFrame(columns=['From', 'To', 'Distance', 'Priority'])
+    distance_df = pd.DataFrame(columns=['From', 'To', 'Distance', 'Priority', "DeltaV"])
     id_bases = []
     count_bases = 1
 
@@ -37,7 +39,13 @@ def reframe_nodes():
                 y_distance = abs(map_df["long"][i] - map_df["long"][j]) * 111
                 tot_distance = (x_distance ** 2 + y_distance ** 2) ** (1 / 2)
                 priority = map_df['priority'][i]
-                distance_df.loc[-1] = [from_node, to_node, tot_distance, priority]
+                delta_lat = map_df["lat"][j] - map_df["lat"][i]
+                delta_long = map_df["long"][j] - map_df["long"][i]
+                angle = np.arctan((delta_lat / delta_long)) * 360 / 2 / pi
+                angle_wind = angle + 90
+                factor = np.cos(angle_wind * 2 * pi / 360)
+                Delta_V = V_wind * factor
+                distance_df.loc[-1] = [from_node, to_node, tot_distance, priority, Delta_V]
                 distance_df.index += 1
                 distance_df = distance_df.sort_index()
                 distance_df = distance_df.iloc[::-1]
