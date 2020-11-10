@@ -41,7 +41,7 @@ def optimise(base_id=[1,2]):
     takeofftime=2        # Time to complete take-off [min]
     landingtime=2        # Time to complete landing [min]
     unloadingtime=5      # Time to unload payload [min]
-    depots = base_id       # Number and Name of depots (base) - Must be in ascending order
+    depots = base_id     # Number and Name of depots (base) - Must be in ascending order
     priorityweight = 1   # Weighting factor of the priority objective
 
 
@@ -127,8 +127,7 @@ def optimise(base_id=[1,2]):
                 for k in range(1, maxdrones + 1):
                     #can add here an if for impossible edges
                     thisLHS= LinExpr()
-                    thisLHS= s[i,k]-s[j,k]+((edges['Distance'][count])/speed*60+takeofftime+landingtime+unloadingtime)-K*(1-x[i,j,k])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
-
+                    thisLHS= s[i,k]-s[j,k]+((edges['Distance'][count])/(speed+edges['DeltaV'][count])*60+takeofftime+landingtime+unloadingtime)-K*(1-x[i,j,k])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
                     model.addConstr(lhs=thisLHS, sense = GRB.LESS_EQUAL, rhs=0, name='time_' + str(i)+"i"+str(j)+"j"+str(k)+"k")
                 count = count + 1
     model.update()

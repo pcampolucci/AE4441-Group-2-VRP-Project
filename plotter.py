@@ -14,11 +14,11 @@ import pydeck as pdk
 DEBUG = False
 
 
-def plot_map():
+def plot_map(path):
 
     # get databases for initial map and optimal computed solution
     cwd = os.getcwd()
-    database = "\database\\nodes.xlsx"
+    database = path
     solution = "\database\\solution.xlsx"
 
     # augment properties of nodes for better understanding of the scenario
@@ -112,4 +112,4 @@ def plot_map():
 
 
 if DEBUG:
-    plot_map()
+    plot_map("\database\\nodes.xlsx")

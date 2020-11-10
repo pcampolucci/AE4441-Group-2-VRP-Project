@@ -11,11 +11,11 @@ import pandas as pd
 import os
 
 
-def reframe_nodes(V_wind=5):
+def reframe_nodes(path, V_wind=5):
 
     # get files and path information
     cwd = os.getcwd()
-    database = "\database\\nodes.xlsx"
+    database = path
     target = "\database\\variables.xlsx"
 
     print(f"Reading nodes and bases from {cwd+database}\n")
@@ -44,7 +44,7 @@ def reframe_nodes(V_wind=5):
                 angle = np.arctan((delta_lat / delta_long)) * 360 / 2 / pi
                 angle_wind = angle + 90
                 factor = np.cos(angle_wind * 2 * pi / 360)
-                Delta_V = V_wind * factor
+                Delta_V = (V_wind * factor)/3.6
                 distance_df.loc[-1] = [from_node, to_node, tot_distance, priority, Delta_V]
                 distance_df.index += 1
                 distance_df = distance_df.sort_index()
