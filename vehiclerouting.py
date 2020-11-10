@@ -13,21 +13,23 @@ from gurobipy import Model,GRB,LinExpr
 import pickle
 
 
-from plotter import do_plot
+#from plotter import do_plot
 
 # Get path to current folder
 cwd = os.getcwd()
 print(cwd)
 # Get all instances
 full_list = os.listdir(cwd)
-###MAC####
+
+####-----MAC---------####
 #instance_name ='/pvrold.xlsx'
 #instance_name = '/database/pvr.xlsx'
+instance_name = '/database/simplerealnodes.xlsx'
 #instance_name = '/pvr.xlsx'
 
-####Windows###
+####----Windows-----####
 #instance_name ='/pvrold.xlsx'
-instance_name = '\database\pvr.xlsx'
+#instance_name = '\database\pvr.xlsx'
 #instance_name = '/pvr.xlsx'
 
 # Load data for this instance
@@ -46,16 +48,14 @@ speed=150
 takeofftime=2
 landingtime=2
 unloadingtime=5
-
+depots = [1,2]
 
 
 
 startTimeSetUp = time.time()
 model = Model()
 maxnode = max(edges['From']+1)
-#################
-### VARIABLES ###
-#################
+####################-----VARIABLES-----####################
 #xij = {}
 xk = {}
 x = {}
@@ -64,7 +64,8 @@ x = {}
 #         if i != j:
 #             xij[i,j] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name="xij[%s,%s]"%(i,j))
 for k in range(1,maxdrones+1):
-    xk[k] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="xk[%s]" % (k))
+    for base in depots:
+        xk[k,base] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="xk[%s,%s]" % (k,base))
     for i in range(0, len(edges)):
         x[edges['From'][i], edges['To'][i],k] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY,name="x[%s,%s,%s]" % (edges['From'][i], edges['To'][i],k))
 
@@ -74,12 +75,12 @@ for i in range(1, max(edges['From']+1)):
         s[i,k] = model.addVar(lb=0,ub=K,vtype=GRB.CONTINUOUS,name="s[%s,%s]"%(i,k))
 model.update()
 
-###################
-### CONSTRAINTS ###
-###################
+###################### CONSTRAINTS ######################
 #print(len(edges) - 1)
 #print(edges['From'][len(edges) - 1])
 #print(range(1, edges['From'][len(edges) - 1]))
+
+####----Flow and Travelling salesman constraint-----#######
 for i in range(1, maxnode):
     #print("Node",i)
     idx_this_node_out = np.where(edges['From'] == i)[0]
@@ -103,37 +104,42 @@ for i in range(1, maxnode):
                 thisLHS += x[i, edges['To'][idx_this_node_out[j]],k]
         model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=1, name='node_out_' + str(i))
 
-
+####----Drone payload and range constraint----#####
 for k in range(1, maxdrones + 1):
-    thisLHS1 = LinExpr()
-    thisLHS2 = LinExpr()
     thisLHS = LinExpr()
     thisrangeLHS = LinExpr()
     count=0
     for i in range(1, max(edges['From'] + 1)):
-        if i != 1:
-            thisLHS1+= x[1,i,k]
-            thisLHS2+= x[i,1,k]
         for j in range(1, max(edges['From'] + 1)):
             if j != i:
                 thisLHS+= x[i,j,k]
                 thisrangeLHS+= x[i,j,k]*edges['Distance'][count]
-                count+= 1
+                count += 1
     thisLHS = thisLHS*custumerdemand
-    thisLHS1 -= xk[k]
-    thisLHS2 -= xk[k]
-    model.addConstr(lhs=thisLHS1, sense=GRB.EQUAL, rhs=0, name='drone_out_' + str(k))
-    model.addConstr(lhs=thisLHS2, sense=GRB.EQUAL, rhs=0, name='drone_in_' + str(k))
     model.addConstr(lhs=thisLHS, sense=GRB.LESS_EQUAL, rhs=maxpayload+1, name='drone_payload_' + str(k))
     model.addConstr(lhs=thisrangeLHS, sense=GRB.LESS_EQUAL, rhs=maxrange, name='drone_range_' + str(k))
 
+####----Multi base constraint----######
+for k in range(1, maxdrones + 1):
+    thisLHS1 = LinExpr()
+    thisLHS2 = LinExpr()
+    for base in depots:
+        for i in range(max(depots)+1, max(edges['From'] + 1)):
+            thisLHS1 += x[base, i, k]
+            thisLHS2 += x[i, base, k]
+        thisLHS1 -= xk[k,base]
+        thisLHS2 -= xk[k,base]
+        model.addConstr(lhs=thisLHS1, sense=GRB.EQUAL, rhs=0, name='drone'+ str(k)+'out_base_' + str(base))
+        model.addConstr(lhs=thisLHS2, sense=GRB.EQUAL, rhs=0, name='drone'+ str(k)+'in_base_' + str(base))
 
+
+####----Time constraints to avoid inner loops-----####
 thisLHS = LinExpr()
 count = 0
 for i in range(1, max(edges['From']+1)):
     for j in range (1, max(edges['From']+1)):
         #print(count)
-        if i != j & j!=1:
+        if i != j & j not in depots:
             for k in range(1, maxdrones + 1):
                 #can add here an if for impossible edges
                 thisLHS= LinExpr()
@@ -141,17 +147,9 @@ for i in range(1, max(edges['From']+1)):
 
                 model.addConstr(lhs=thisLHS, sense = GRB.LESS_EQUAL, rhs=0, name='time_' + str(i)+"i"+str(j)+"j"+str(k)+"k")
             count = count + 1
-
-# for i in range(1,maxnode):
-#     for j in range(1,maxnode):
-#         if i != j:
-#             thisLHS= LinExpr()
-#             for k in range(1,maxdrones):
-#                 thisLHS += x[i,j,k]
-#             thisLHS -= xij[i,j]
-#             model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,name='time_new_' + str(i) + "i" + str(j) + "j" )
-
 model.update()
+
+#####----Object function setting-----#####
 obj = LinExpr()
 count=0
 for i in range(1, maxnode):
@@ -161,7 +159,8 @@ for i in range(1, maxnode):
                 obj += edges['Distance'][count] * x[i,j,k]*costperkm #+ s[i,k]
             count += 1
 for k in range(1,maxdrones+1):
-    obj += xk[k]*droneFC
+    for base in depots:
+        obj += xk[k,base]*droneFC
 
 # for i in range(1, maxnode):
 #     for j in range(1,maxnode):
@@ -176,6 +175,8 @@ for k in range(1,maxdrones+1):
 model.setObjective(obj, GRB.MINIMIZE)
 model.update()
 model.write('model_formulation2.lp')
+
+####-----Start of optimization process-----#####
 print("------STARTING OPTIMIZATION--------")
 model.optimize()
 endTime = time.time()
@@ -189,8 +190,11 @@ for v in model.getVars():
     #if v.xk==1:
     #    activedrones.append([v.varName])
 print(solution)
-print(fullsolution)
+#print(fullsolution)
 
+
+
+######-----Post ptocessing of solution------######
 def solution_to_excel(solution):
 
     solution_df = pd.DataFrame(columns=["From", "To", "Drone"])
@@ -211,8 +215,8 @@ def solution_to_excel(solution):
 
 #Comment out because not working
 
-do_plot()
-solution_to_excel(solution)
+#do_plot()
+#solution_to_excel(solution)
 
 
 
