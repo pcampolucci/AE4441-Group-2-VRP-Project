@@ -30,20 +30,33 @@ def optimise(base_id=[1,2]):
     print("edges", edges)
 
     ###------Model options------###
-    droneFC=5            # Drone fixed cost
-    K=300                # Time upperbound
+    # droneFC=5            # Drone fixed cost
+    # K=300                # Time upperbound
+    # custumerdemand=1     # Number of blood bags required by the hospitals
+    # maxpayload=5         # Maximum numbers of blood bags the drone can carry
+    # costperkm=0.5        # Run cost of drone [€/km]
+    # maxdrones=10         # Maximum number of drones
+    # maxrange=800         # Maximum range of the drone [km]
+    # speed=150            # Cruise speed of the drone [km/h]
+    # takeofftime=2        # Time to complete take-off [min]
+    # landingtime=2        # Time to complete landing [min]
+    # unloadingtime=5      # Time to unload payload [min]
+    # depots = base_id     # Number and Name of depots (base) - Must be in ascending order
+    # priorityweight = 1   # Weighting factor of the priority objective
+    #
+    droneFC=1            # Drone fixed cost
+    K=1000                # Time upperbound
     custumerdemand=1     # Number of blood bags required by the hospitals
-    maxpayload=5         # Maximum numbers of blood bags the drone can carry
-    costperkm=0.5        # Run cost of drone [€/km]
-    maxdrones=10         # Maximum number of drones
-    maxrange=800         # Maximum range of the drone [km]
-    speed=150            # Cruise speed of the drone [km/h]
-    takeofftime=2        # Time to complete take-off [min]
-    landingtime=2        # Time to complete landing [min]
-    unloadingtime=5      # Time to unload payload [min]
+    maxpayload=4        # Maximum numbers of blood bags the drone can carry
+    costperkm=1        # Run cost of drone [€/km]
+    maxdrones=5         # Maximum number of drones
+    maxrange=11         # Maximum range of the drone [km]
+    speed=1            # Cruise speed of the drone [km/h]
+    takeofftime=0        # Time to complete take-off [min]
+    landingtime=0        # Time to complete landing [min]
+    unloadingtime=0      # Time to unload payload [min]
     depots = base_id     # Number and Name of depots (base) - Must be in ascending order
-    priorityweight = 1   # Weighting factor of the priority objective
-
+    priorityweight = 0   # Weighting factor of the priority objective
 
     startTimeSetUp = time.time()
     model = Model()
@@ -167,10 +180,13 @@ def optimise(base_id=[1,2]):
     return solution
 
 ######-----Post ptocessing of solution------######
-def solution_to_excel(solution):
+def solution_to_excel(ismac,solution):
 
     solution_df = pd.DataFrame(columns=["From", "To", "Drone"])
-    solution_path = "\database\solution.xlsx"
+    if ismac:
+        solution_path = "/database/solution.xlsx"
+    else:
+        solution_path = "\database\solution.xlsx"
 
 
     for edge in solution:
@@ -186,7 +202,7 @@ def solution_to_excel(solution):
                 solution_df = solution_df.iloc[::-1]
 
     solution_df.to_excel(cwd + solution_path, 'data')
-    print(f"Solution written to {cwd + solution_path}")
+    #print(f"Solution written to {cwd + solution_path}")
 
 
 if DEBUG:
