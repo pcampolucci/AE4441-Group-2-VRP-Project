@@ -10,7 +10,7 @@ from plotter import plot_map
 do_reframe = False  # only for debugging reframe (keep False)
 do_optimise = True
 do_plot = True
-wind_speed = 10 # [m/s]
+wind_speed = 10  # [m/s]
 nodes_path = "\database\\nodes.xlsx"  # use the tiny version for testing (nodes.xlsx default)
 
 

@@ -26,7 +26,7 @@ def optimise(base_id=[1,2]):
     instance_name = '/database/variables.xlsx'
 
     # Load data for this instance
-    edges= pd.read_excel(cwd + instance_name, sheet_name='data')
+    edges = pd.read_excel(cwd + instance_name, sheet_name='data')
     print("edges", edges)
 
     ###------Model options------###
@@ -35,7 +35,7 @@ def optimise(base_id=[1,2]):
     custumerdemand=1     # Number of blood bags required by the hospitals
     maxpayload=5         # Maximum numbers of blood bags the drone can carry
     costperkm=0.5        # Run cost of drone [€/km]
-    maxdrones=25         # Maximum number of drones
+    maxdrones=10         # Maximum number of drones
     maxrange=800         # Maximum range of the drone [km]
     speed=150            # Cruise speed of the drone [km/h]
     takeofftime=2        # Time to complete take-off [min]
@@ -80,7 +80,7 @@ def optimise(base_id=[1,2]):
                 thisLHS -= x[edges['From'][idx_this_node_in[j]], i, k]
             model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,name='node_flow_' + str(i)+"i"+str(k)+"k")
         thisLHS = LinExpr()
-        if i > 1:
+        if i > max(depots):
             for j in range(0, len(idx_this_node_out)):
                 for k in range(1, maxdrones + 1):
                     thisLHS += x[i, edges['To'][idx_this_node_out[j]],k]
@@ -95,7 +95,7 @@ def optimise(base_id=[1,2]):
             for j in range(1, max(edges['From'] + 1)):
                 if j != i:
                     thisLHS+= x[i,j,k]
-                    thisrangeLHS+= x[i,j,k]*edges['Distance'][count]
+                    thisrangeLHS+= x[i,j,k]*edges['Distance'][count]*(1 + edges['DeltaV'][count]/speed)
                     count += 1
         thisLHS = thisLHS*custumerdemand
         model.addConstr(lhs=thisLHS, sense=GRB.LESS_EQUAL, rhs=maxpayload+1, name='drone_payload_' + str(k))
@@ -171,6 +171,7 @@ def solution_to_excel(solution):
 
     solution_df = pd.DataFrame(columns=["From", "To", "Drone"])
     solution_path = "\database\solution.xlsx"
+
 
     for edge in solution:
         if str(edge[0][:2]) != 'xk':
