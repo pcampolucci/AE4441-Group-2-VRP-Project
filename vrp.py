@@ -45,21 +45,25 @@ def optimise(base_id):
     # depots = base_id     # Number and Name of depots (base) - Must be in ascending order
     # priorityweight = 1   # Weighting factor of the priority objective
     # verificationmode = 0 # 1 if model is being verified, 0 otherwise
-    droneFC=1000            # Drone fixed cost
+    droneFC=1            # Drone fixed cost
     K=100.                # Penalty coefficient in inner loop avoidance constraint
     bi= 180              # Time upper bound
     custumerdemand=1     # Number of blood bags required by the hospitals
-    maxpayload=4       # Maximum numbers of blood bags the drone can carry
+    maxpayload=40       # Maximum numbers of blood bags the drone can carry
     costperkm=1        # Run cost of drone [€/km]
     maxdrones=3         # Maximum number of drones
     maxrange=110         # Maximum range of the drone [km]
-    speed=60            # Cruise speed of the drone [km/h]
+    speed=60           # Cruise speed of the drone [km/h]
     takeofftime=1        # Time to complete take-off [min]
     landingtime=1        # Time to complete landing [min]
     unloadingtime=1     # Time to unload payload [min]
     depots = base_id     # Number and Name of depots (base) - Must be in ascending order
-    priorityweight = 1   # Weighting factor of the priority objective
-    verificationmode = 1   # 1 if model is being verified, 0 otherwise
+    priorityweight = 0   # Weighting factor of the priority objective
+    verificationmode = False   # 1 if model is being verified, 0 otherwise
+
+    if verificationmode:
+        depots=[1]
+
 
     startTimeSetUp = time.time()
     model = Model()
