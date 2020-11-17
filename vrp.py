@@ -19,7 +19,7 @@ print(cwd)
 # Get all instances
 full_list = os.listdir(cwd)
 
-def optimise(base_id=[1,2]):
+def optimise(base_id):
 
     ####-----MAC---------####
 
@@ -31,7 +31,8 @@ def optimise(base_id=[1,2]):
 
     ###------Model options------###
     # droneFC=5            # Drone fixed cost
-    # K=300                # Time upperbound
+    # K = 100              # Penalty coefficient in inner loop avoidance constraint
+    # bi = 30              # Time upper bound min
     # custumerdemand=1     # Number of blood bags required by the hospitals
     # maxpayload=5         # Maximum numbers of blood bags the drone can carry
     # costperkm=0.5        # Run cost of drone [€/km]
@@ -43,20 +44,22 @@ def optimise(base_id=[1,2]):
     # unloadingtime=5      # Time to unload payload [min]
     # depots = base_id     # Number and Name of depots (base) - Must be in ascending order
     # priorityweight = 1   # Weighting factor of the priority objective
-    #
-    droneFC=1            # Drone fixed cost
-    K=1000                # Time upperbound
+    # verificationmode = 0 # 1 if model is being verified, 0 otherwise
+    droneFC=1000            # Drone fixed cost
+    K=100.                # Penalty coefficient in inner loop avoidance constraint
+    bi= 180              # Time upper bound
     custumerdemand=1     # Number of blood bags required by the hospitals
-    maxpayload=4        # Maximum numbers of blood bags the drone can carry
+    maxpayload=4       # Maximum numbers of blood bags the drone can carry
     costperkm=1        # Run cost of drone [€/km]
-    maxdrones=5         # Maximum number of drones
-    maxrange=11         # Maximum range of the drone [km]
-    speed=1            # Cruise speed of the drone [km/h]
-    takeofftime=0        # Time to complete take-off [min]
-    landingtime=0        # Time to complete landing [min]
-    unloadingtime=0      # Time to unload payload [min]
+    maxdrones=3         # Maximum number of drones
+    maxrange=110         # Maximum range of the drone [km]
+    speed=60            # Cruise speed of the drone [km/h]
+    takeofftime=1        # Time to complete take-off [min]
+    landingtime=1        # Time to complete landing [min]
+    unloadingtime=1     # Time to unload payload [min]
     depots = base_id     # Number and Name of depots (base) - Must be in ascending order
-    priorityweight = 0   # Weighting factor of the priority objective
+    priorityweight = 1   # Weighting factor of the priority objective
+    verificationmode = 1   # 1 if model is being verified, 0 otherwise
 
     startTimeSetUp = time.time()
     model = Model()
@@ -76,7 +79,7 @@ def optimise(base_id=[1,2]):
     s = {}
     for i in range(1, max(edges['From']+1)):
         for k in range(1, maxdrones + 1):
-            s[i,k] = model.addVar(lb=0,ub=K,vtype=GRB.CONTINUOUS,name="s[%s,%s]"%(i,k))
+            s[i,k] = model.addVar(lb=0,ub=bi,vtype=GRB.CONTINUOUS,name="s[%s,%s]"%(i,k))
     model.update()
 
     ###################### CONSTRAINTS ######################
@@ -132,6 +135,10 @@ def optimise(base_id=[1,2]):
 
     ####----Time constraints to avoid inner loops-----####
     thisLHS = LinExpr()
+    #for i in range(1, max(edges['From'] + 1)):
+    #    for k in range(1, maxdrones + 1):
+    #        s[i, k] = model.addVar(lb=0, ub=K, vtype=GRB.CONTINUOUS, name="s[%s,%s]" % (i, k))
+
     count = 0
     for i in range(1, max(edges['From']+1)):
         for j in range (1, max(edges['From']+1)):
@@ -140,8 +147,10 @@ def optimise(base_id=[1,2]):
                 for k in range(1, maxdrones + 1):
                     #can add here an if for impossible edges
                     thisLHS= LinExpr()
-                    thisLHS= s[i,k]-s[j,k]+((edges['Distance'][count])/(speed+edges['DeltaV'][count])*60+takeofftime+landingtime+unloadingtime)-K*(1-x[i,j,k])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
+                    thisLHS= s[i,k]-s[j,k]+((edges['Distance'][count])/(speed+edges['DeltaV'][count])*(60)+takeofftime+landingtime+unloadingtime)-K*(1-x[i,j,k])#[i+j-1]#+K*(1-x[i,j])#+edges['Distance'][1]
                     model.addConstr(lhs=thisLHS, sense = GRB.LESS_EQUAL, rhs=0, name='time_' + str(i)+"i"+str(j)+"j"+str(k)+"k")
+                count = count + 1
+            if i!=j & j in depots:
                 count = count + 1
     model.update()
 
@@ -172,11 +181,12 @@ def optimise(base_id=[1,2]):
     fullsolution = []
     solution = []
     for v in model.getVars():
-        fullsolution.append([v.varName, v.x])
+        if v.x>1:
+            fullsolution.append([v.varName, v.x])
         if v.x!=0:
             solution.append([v.varName])
     print(solution)
-
+    print("Times",fullsolution)
     return solution
 
 ######-----Post ptocessing of solution------######

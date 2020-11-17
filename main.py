@@ -6,10 +6,12 @@ Description: Run and tune main to be sure that everything is running in series.
 from vrp import optimise, solution_to_excel
 from reframe import reframe_nodes
 #from plotter import plot_map
+from verificationplotter import simpleplot
 
 do_reframe = False  # only for debugging reframe (keep False)
 do_optimise = True
 do_plot = False
+do_simple_plot = True
 wind_speed = 0  # [m/s]
 
 ismac = True
@@ -36,6 +38,8 @@ def main():
         if do_plot:
             print("\n" + "=" * 100 + "\n")
             plot_map(nodes_path)
+        if do_simple_plot:
+            simpleplot()
 
 
 main()
