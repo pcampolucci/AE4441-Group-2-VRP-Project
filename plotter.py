@@ -9,17 +9,22 @@ import pandas as pd
 import os
 import streamlit as st
 import pydeck as pdk
+from datetime import datetime
 
 # debugging option
 DEBUG = False
 
 
-def plot_map(path):
+def plot_map(path, is_mac):
 
     # get databases for initial map and optimal computed solution
     cwd = os.getcwd()
     database = path
-    solution = "\database\\solution.xlsx"
+
+    if is_mac:
+        solution = "/database/solution.xlsx"
+    else:
+        solution = "\database\\solution.xlsx"
 
     # augment properties of nodes for better understanding of the scenario
     node_dict = {
@@ -35,7 +40,7 @@ def plot_map(path):
 
     start_df = pd.read_excel(cwd + database)
     start_df['size'] = start_df.apply(lambda row: node_dict[row['type']]['size'], axis=1)
-    start_df['color'] = start_df.apply(lambda row: node_dict[row['type']][f'color{row["priority"]}'], axis=1)
+    start_df['color'] = start_df.apply(lambda row: node_dict[row['type']]['color{prio}'.format(prio=row["priority"])],axis=1)
     start_df['name'] = start_df['type'] + ' (id: ' + start_df['id'].astype(str) + ')'
 
     # build data frame for arc plotting based on solution
@@ -107,9 +112,16 @@ def plot_map(path):
         mapbox_key='pk.eyJ1IjoicGNhbXBvbHVjY2kiLCJhIjoiY2toYTg2bTFxMGg3aTJ5bGhwZWhmMDg0bCJ9.ViTFJLTd8KTj_8MZK0zYWA'
     )
 
-    r.to_html("plots\\routing_solution.html", open_browser=True, notebook_display=False)
+    now = datetime.now()  # current date and time
+
+    if is_mac:
+        r.to_html("/map_plots/routing_solution.html", open_browser=True, notebook_display=False)
+    else:
+        r.to_html(f"map_plots\\routing_solution_{now.strftime('%m_%d_%Y_%H_%M_%S')}.html", open_browser=True,
+                  notebook_display=False)
+
     st.pydeck_chart(r)
 
 
 if DEBUG:
-    plot_map("\database\\nodes.xlsx")
+    plot_map("\database\\nodes.xlsx", False)

@@ -11,17 +11,17 @@ import pandas as pd
 import os
 
 
-def reframe_nodes(ismac,path, V_wind=2):
+def reframe_nodes(is_mac, path, V_wind=2):
 
     # get files and path information
     cwd = os.getcwd()
     database = path
-    if ismac:
+    if is_mac:
         target = "/database/variables.xlsx"
     else:
         target = "\database\\variables.xlsx"
 
-    #print(f"Reading nodes and bases from {cwd+database}\n")
+    print("Reading nodes and bases from ", cwd+database)
 
     # build start and end data frames
     map_df = pd.read_excel(cwd + database)
@@ -40,15 +40,11 @@ def reframe_nodes(ismac,path, V_wind=2):
                 to_node = map_df['id'][j]
                 x_distance = abs(map_df["lat"][i] - map_df["lat"][j]) * 111
                 y_distance = abs(map_df["long"][i] - map_df["long"][j]) * 111
-                #print(x_distance,y_distance)
                 tot_distance = (x_distance ** 2. + y_distance ** 2.) ** (1. / 2.)
-                #print(tot_distance)
                 priority = map_df['priority'][i]
                 delta_lat = map_df["lat"][j] - map_df["lat"][i]
                 delta_long = map_df["long"][j] - map_df["long"][i]
-
                 if V_wind==0:
-                    #print("No wind")
                     Delta_V = 0
                 else:
                     angle = np.arctan((delta_lat / delta_long)) * 360 / 2 / pi
@@ -63,5 +59,5 @@ def reframe_nodes(ismac,path, V_wind=2):
     distance_df.to_excel(cwd+target, 'data')
 
     print(distance_df.head())
-    #print(f"\nExcel file written in {cwd+target}. \nIDs of bases: {id_bases}")
+    print("\nExcel file written in ", cwd+target, "\nIDs of bases: ", id_bases)
     return id_bases
