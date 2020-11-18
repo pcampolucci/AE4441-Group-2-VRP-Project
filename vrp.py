@@ -40,7 +40,7 @@ def optimise(base_id, is_mac):
     maxpayload=5         # Maximum numbers of blood bags the drone can carry
     costperkm=0.5        # Run cost of drone [€/km]
     maxdrones=15         # Maximum number of drones
-    maxrange=300         # Maximum range of the drone [km]
+    maxrange=200         # Maximum range of the drone [km]
     speed=150            # Cruise speed of the drone [km/h]
     takeofftime=2        # Time to complete take-off [min]
     landingtime=2        # Time to complete landing [min]
