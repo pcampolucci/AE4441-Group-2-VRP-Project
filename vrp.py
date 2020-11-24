@@ -11,13 +11,8 @@ import pandas as pd
 import time
 from gurobipy import Model,GRB,LinExpr
 
-DEBUG = False
-
 # Get path to current folder
 cwd = os.getcwd()
-print(cwd)
-# Get all instances
-full_list = os.listdir(cwd)
 
 def optimise(base_id, is_mac):
 
@@ -34,13 +29,13 @@ def optimise(base_id, is_mac):
 
     ###------Model options------###
     droneFC=5            # Drone fixed cost
-    K=300                # Penalty coefficient in inner loop avoidance constraint
+    K=3000                # Penalty coefficient in inner loop avoidance constraint
     bi = 18000           # Time upperbound
     custumerdemand=1     # Number of blood bags required by the hospitals
     maxpayload=5         # Maximum numbers of blood bags the drone can carry
     costperkm=0.5        # Run cost of drone [€/km]
     maxdrones=15         # Maximum number of drones
-    maxrange=200         # Maximum range of the drone [km]
+    maxrange=2000         # Maximum range of the drone [km]
     speed=150            # Cruise speed of the drone [km/h]
     takeofftime=2        # Time to complete take-off [min]
     landingtime=2        # Time to complete landing [min]
@@ -181,67 +176,5 @@ def optimise(base_id, is_mac):
             solution.append([v.varName])
     print("Full", solution)
     print("Times", fullsolution)
-    return solution
+    return solution, fullsolution
 
-
-######-----Post ptocessing of solution------######
-def solution_to_excel(ismac, solution):
-
-    solution_df = pd.DataFrame(columns=["From", "To", "Drone"])
-    if ismac:
-        solution_path = "/database/solution.xlsx"
-    else:
-        solution_path = "\database\solution.xlsx"
-
-
-    for edge in solution:
-        if str(edge[0][:2]) != 'xk':
-            if str(edge[0][:1]) != 's':
-                i_clean = edge[0][2:-1].split(",")
-                from_node = i_clean[0]
-                to_node = i_clean[1]
-                drone_id = i_clean[2]
-                solution_df.loc[-1] = [from_node, to_node, drone_id]
-                solution_df.index += 1
-                solution_df = solution_df.sort_index()
-                solution_df = solution_df.iloc[::-1]
-
-    solution_df.to_excel(cwd + solution_path, 'data')
-    print("Solution written to ", cwd + solution_path)
-
-
-if DEBUG:
-    debug_solution = optimise()
-    solution_to_excel(debug_solution)
-
-#######-------Archive---------##########
-
-#Variables:
-
-# xij = {}
-# for i in range(1,maxnode):
-#     for j in range(1,maxnode):
-#         if i != j:
-#             xij[i,j] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name="xij[%s,%s]"%(i,j))
-
-#Constraints:
-  # if len(idx_this_node_in) > 0:
-    #     for j in range(0, len(idx_this_node_in)):
-    #         for k in range(1, maxdrones + 1):
-    #             thisLHS -= x[edges['From'][idx_this_node_in[j]], i,k]
-    # model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,
-    #                     name='node_flow_' + str(i))
-
-#Objective Function:
-
-# for i in range(1, maxnode):
-#     for j in range(1,maxnode):
-#         if i != j:
-#             obj += edges['Distance'][count] * xij[i,j]*costperkm #+ s[i,k]
-#             count += 1
-# for k in range(1,maxdrones+1):
-#     obj += xk[k]*droneFC
-
-#print(len(edges) - 1)
-#print(edges['From'][len(edges) - 1])
-#print(range(1, edges['From'][len(edges) - 1]))
