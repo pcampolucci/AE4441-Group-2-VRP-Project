@@ -8,17 +8,17 @@ from reframe import reframe_nodes
 from plotter import plot_map
 from plotter_verification import simpleplot
 
-do_reframe = False  # only for debugging reframe (keep False)
-do_optimise = True
-do_plot = True
+do_reframe = True  # only for debugging reframe (keep False)
+do_optimise = False
+do_plot = False
 do_simple_plot = False
-wind_speed = 0  # [m/s]
+wind_speed = 10  # [m/s]
 is_mac = False
 
 if is_mac:
     nodes_path = "/database/validation.xlsx"
 else:
-    nodes_path = "\database\\nodes.xlsx"  # use the tiny version for testing (nodes.xlsx default)
+    nodes_path = "\database\\verification_data_sets\\verBloodRP.xlsx"  # use the tiny version for testing (nodes.xlsx default)
 
 
 def main():

@@ -9,7 +9,8 @@ import numpy as np
 from math import *
 import pandas as pd
 import os
-
+import warnings
+warnings.filterwarnings("ignore")
 
 def reframe_nodes(is_mac, path, V_wind=2):
 
@@ -47,10 +48,8 @@ def reframe_nodes(is_mac, path, V_wind=2):
                 if V_wind==0:
                     Delta_V = 0
                 else:
-                    angle = np.arctan((delta_lat / delta_long)) * 360 / 2 / pi
-                    angle_wind = angle + 90
-                    factor = np.cos(angle_wind * 2 * pi / 360)
-                    Delta_V = (V_wind * factor)/3.6
+                    angle = np.arctan2(delta_lat, delta_long) * 360. / 2. / np.pi
+                    Delta_V = V_wind * np.sin(angle * np.pi / 180.)
                 distance_df.loc[-1] = [from_node, to_node, tot_distance, priority, Delta_V]
                 distance_df.index += 1
                 distance_df = distance_df.sort_index()
