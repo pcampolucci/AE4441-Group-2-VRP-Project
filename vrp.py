@@ -183,6 +183,7 @@ def optimise(base_id, is_mac):
     print("Times", fullsolution)
     return solution
 
+
 ######-----Post ptocessing of solution------######
 def solution_to_excel(ismac, solution):
 
