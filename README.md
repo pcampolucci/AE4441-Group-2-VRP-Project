@@ -7,7 +7,7 @@ to each hospital in the area in the fastest possible way, in the more efficient 
 The features of this tool are:
 
 - Multiple starting bases
-- Priority setting for each hospital based on the urgency (0,1,2)
+- Priority setting for each hospital based on the urgency 
 - Wind effect on the speed of the drone
 - Max drone range constraint
 
