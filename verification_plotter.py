@@ -30,7 +30,7 @@ def simpleplot():
     #coord['long'][:]=coord['long'][:]*111
     print("coord",coord)
     print("coord", xc,yc)
-    colors = ['red','blue','orange','green','pink','purple']
+    colors = ['red','blue','orange','green','pink','purple','brown','pink','gray','olive','cyan']
 
     plt.plot(xc[np.where(coord['type']=='base')[0]],yc[np.where(coord['type']=='base')[0]],'s',color='black')
     plt.plot(xc[np.where(coord['type']=='hospital')[0]],yc[np.where(coord['type']=='hospital')[0]],'o',color='black',fillstyle='none')
