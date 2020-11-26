@@ -21,10 +21,10 @@ def simpleplot():
     instance_name = '/database/solution.xlsx'
     sol = pd.read_excel(cwd + instance_name, sheet_name='data')
     print("solution", sol)
-    instance_name = '/database/validation.xlsx'
+    instance_name = "/database/verification data sets/verBloodRP.xlsx"#'/database/validation.xlsx'
     coord = pd.read_excel(cwd + instance_name, sheet_name='Sheet1')
-    xc = coord['lat'][:]*111
-    yc = coord['long'][:]*111
+    xc = coord['long'][:]*111
+    yc = coord['lat'][:]*111
     ids = coord['id']
     #coord['lat'][:]=coord['lat'][:]*111
     #coord['long'][:]=coord['long'][:]*111
@@ -47,16 +47,16 @@ def simpleplot():
         y2=float(yc[np.where(coord['id']==sol['To'][j])[0]])
         print('y2', y2)
         print('values',x1,y1,x2-x1,y2-y1)
-        plt.arrow(x1,y1,x2-x1,y2-y1,color=colors[sol['Drone'][j]],width=0.01,shape='full',length_includes_head=True,head_width=0.25)
+        plt.arrow(x1,y1,x2-x1,y2-y1,color=colors[sol['Drone'][j]],width=0.01,shape='full',length_includes_head=True,head_width=0.1)
         dis=round(float(edges['Distance'][(edges['From']==sol['From'][j])&(edges['To']==sol['To'][j])]),2)
         dis="("+str(dis)+")"
         plt.annotate(s=dis,xy=[(x2+x1)/2*1.1,(y2+y1)/2+0.2],textcoords="offset points",xytext=(0,5), ha='center')
     plt.xlabel("x [km]")
     plt.ylabel("y [km]")
-    #plt.xlim(-5.5, 1.2)
-    #plt.ylim(-1.2, 1.2)
-    plt.xlim(-5.5, 5.5)
-    plt.ylim(-4, 4)
+    plt.xlim(-5.5, 1.2)
+    plt.ylim(-1.2, 1.2)
+    #plt.xlim(-5.5, 5.5)
+    #plt.ylim(-4, 4)
     plt.grid(b=None, which='major', axis='both')
     plt.show()
 
