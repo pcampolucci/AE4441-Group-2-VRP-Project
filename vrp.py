@@ -11,59 +11,41 @@ import pandas as pd
 import time
 from gurobipy import Model,GRB,LinExpr
 
-DEBUG = False
-
 # Get path to current folder
 cwd = os.getcwd()
-print(cwd)
-# Get all instances
-full_list = os.listdir(cwd)
 
-def optimise(base_id):
+def optimise(base_id, is_mac):
 
     ####-----MAC---------####
 
-    instance_name = '/database/variables.xlsx'
+    if is_mac:
+        instance_name = '/database/variables.xlsx'
+    else:
+        instance_name = '\database\\variables.xlsx'
 
     # Load data for this instance
     edges = pd.read_excel(cwd + instance_name, sheet_name='data')
     print("edges", edges)
 
     ###------Model options------###
-    # droneFC=5            # Drone fixed cost
-    # K = 100              # Penalty coefficient in inner loop avoidance constraint
-    # bi = 30              # Time upper bound min
-    # custumerdemand=1     # Number of blood bags required by the hospitals
-    # maxpayload=5         # Maximum numbers of blood bags the drone can carry
-    # costperkm=0.5        # Run cost of drone [€/km]
-    # maxdrones=10         # Maximum number of drones
-    # maxrange=800         # Maximum range of the drone [km]
-    # speed=150            # Cruise speed of the drone [km/h]
-    # takeofftime=2        # Time to complete take-off [min]
-    # landingtime=2        # Time to complete landing [min]
-    # unloadingtime=5      # Time to unload payload [min]
-    # depots = base_id     # Number and Name of depots (base) - Must be in ascending order
-    # priorityweight = 1   # Weighting factor of the priority objective
-    # verificationmode = 0 # 1 if model is being verified, 0 otherwise
-    droneFC=1            # Drone fixed cost
-    K=100.                # Penalty coefficient in inner loop avoidance constraint
-    bi= 180              # Time upper bound
+    droneFC=5            # Drone fixed cost
+    K=3000                # Penalty coefficient in inner loop avoidance constraint
+    bi = 18000           # Time upperbound
     custumerdemand=1     # Number of blood bags required by the hospitals
-    maxpayload=40       # Maximum numbers of blood bags the drone can carry
-    costperkm=1        # Run cost of drone [€/km]
-    maxdrones=3         # Maximum number of drones
-    maxrange=110         # Maximum range of the drone [km]
-    speed=60           # Cruise speed of the drone [km/h]
-    takeofftime=1        # Time to complete take-off [min]
-    landingtime=1        # Time to complete landing [min]
-    unloadingtime=1     # Time to unload payload [min]
+    maxpayload=5         # Maximum numbers of blood bags the drone can carry
+    costperkm=0.5        # Run cost of drone [€/km]
+    maxdrones=15         # Maximum number of drones
+    maxrange=2000         # Maximum range of the drone [km]
+    speed=150            # Cruise speed of the drone [km/h]
+    takeofftime=2        # Time to complete take-off [min]
+    landingtime=2        # Time to complete landing [min]
+    unloadingtime=5      # Time to unload payload [min]
     depots = base_id     # Number and Name of depots (base) - Must be in ascending order
-    priorityweight = 0   # Weighting factor of the priority objective
-    verificationmode = False   # 1 if model is being verified, 0 otherwise
+    priorityweight = 1   # Weighting factor of the priority objective
+    verificationmode = False  # 1 if model is being verified, 0 otherwise
 
     if verificationmode:
         depots=[1]
-
 
     startTimeSetUp = time.time()
     model = Model()
@@ -175,7 +157,10 @@ def optimise(base_id):
 
     model.setObjective(obj, GRB.MINIMIZE)
     model.update()
-    model.write('LPSolve\model_formulation2.lp')
+    if is_mac:
+        model.write('/LPSolve/model_formulation2.lp')
+    else:
+        model.write('LPSolve\model_formulation2.lp')
 
     ####-----Start of optimization process-----#####
     print("------STARTING OPTIMIZATION--------")
@@ -189,68 +174,7 @@ def optimise(base_id):
             fullsolution.append([v.varName, v.x])
         if v.x!=0:
             solution.append([v.varName])
-    print(solution)
-    print("Times",fullsolution)
-    return solution
+    print("Full", solution)
+    print("Times", fullsolution)
+    return solution, fullsolution
 
-######-----Post ptocessing of solution------######
-def solution_to_excel(ismac,solution):
-
-    solution_df = pd.DataFrame(columns=["From", "To", "Drone"])
-    if ismac:
-        solution_path = "/database/solution.xlsx"
-    else:
-        solution_path = "\database\solution.xlsx"
-
-
-    for edge in solution:
-        if str(edge[0][:2]) != 'xk':
-            if str(edge[0][:1]) != 's':
-                i_clean = edge[0][2:-1].split(",")
-                from_node = i_clean[0]
-                to_node = i_clean[1]
-                drone_id = i_clean[2]
-                solution_df.loc[-1] = [from_node, to_node, drone_id]
-                solution_df.index += 1
-                solution_df = solution_df.sort_index()
-                solution_df = solution_df.iloc[::-1]
-
-    solution_df.to_excel(cwd + solution_path, 'data')
-    #print(f"Solution written to {cwd + solution_path}")
-
-
-if DEBUG:
-    debug_solution = optimise()
-    solution_to_excel(debug_solution)
-
-#######-------Archive---------##########
-
-#Variables:
-
-# xij = {}
-# for i in range(1,maxnode):
-#     for j in range(1,maxnode):
-#         if i != j:
-#             xij[i,j] = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name="xij[%s,%s]"%(i,j))
-
-#Constraints:
-  # if len(idx_this_node_in) > 0:
-    #     for j in range(0, len(idx_this_node_in)):
-    #         for k in range(1, maxdrones + 1):
-    #             thisLHS -= x[edges['From'][idx_this_node_in[j]], i,k]
-    # model.addConstr(lhs=thisLHS, sense=GRB.EQUAL, rhs=0,
-    #                     name='node_flow_' + str(i))
-
-#Objective Function:
-
-# for i in range(1, maxnode):
-#     for j in range(1,maxnode):
-#         if i != j:
-#             obj += edges['Distance'][count] * xij[i,j]*costperkm #+ s[i,k]
-#             count += 1
-# for k in range(1,maxdrones+1):
-#     obj += xk[k]*droneFC
-
-#print(len(edges) - 1)
-#print(edges['From'][len(edges) - 1])
-#print(range(1, edges['From'][len(edges) - 1]))

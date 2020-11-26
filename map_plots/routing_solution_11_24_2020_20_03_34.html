@@ -1,0 +1,64 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>pydeck</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" />
+    <script src=https://cdn.jsdelivr.net/npm/@deck.gl/jupyter-widget@~8.1.*/dist/index.js></script>
+    <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #deck-map-container {
+      width: 100%;
+      height: 100%;
+      background-color: black;
+    }
+
+    #map {
+      pointer-events: none;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      z-index: 1;
+    }
+
+    #deckgl-overlay {
+      z-index: 2;
+      background: none;
+    }
+
+    #deck-map-wrapper {
+      width: 100%;
+      height: 100%;
+    }
+
+    #deck-container {
+      width: 100vw;
+      height: 100vh;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="deck-container">
+    </div>
+  </body>
+  <script>
+    const jsonInput = {"initialViewState": {"bearing": -20, "latitude": 7.87, "longitude": 80.6, "pitch": 50, "zoom": 7}, "layers": [{"@@type": "ScatterplotLayer", "data": [{"color": [0, 0, 0], "id": 1, "lat": 8.330539, "long": 80.411661, "name": "base (id: 1)", "priority": 0, "size": 5, "type": "base"}, {"color": [0, 0, 0], "id": 2, "lat": 9.045005, "long": 80.518868, "name": "base (id: 2)", "priority": 0, "size": 5, "type": "base"}, {"color": [252, 186, 3], "id": 3, "lat": 6.188803, "long": 80.519159, "name": "hospital (id: 3)", "priority": 1, "size": 3, "type": "hospital"}, {"color": [65, 252, 3], "id": 4, "lat": 6.978419, "long": 81.246235, "name": "hospital (id: 4)", "priority": 0, "size": 3, "type": "hospital"}, {"color": [65, 252, 3], "id": 5, "lat": 7.018444, "long": 80.760429, "name": "hospital (id: 5)", "priority": 0, "size": 3, "type": "hospital"}, {"color": [252, 186, 3], "id": 6, "lat": 7.221319, "long": 80.055323, "name": "hospital (id: 6)", "priority": 1, "size": 3, "type": "hospital"}, {"color": [252, 32, 3], "id": 7, "lat": 7.499714, "long": 80.62479, "name": "hospital (id: 7)", "priority": 2, "size": 3, "type": "hospital"}, {"color": [65, 252, 3], "id": 8, "lat": 8.016468, "long": 80.920919, "name": "hospital (id: 8)", "priority": 0, "size": 3, "type": "hospital"}, {"color": [252, 32, 3], "id": 9, "lat": 9.360379, "long": 80.39171, "name": "hospital (id: 9)", "priority": 2, "size": 3, "type": "hospital"}], "filled": true, "getFillColor": "@@=color", "getLineColor": [0, 0, 0], "getPosition": "@@=[long, lat]", "getRadius": "@@=exits_radius", "id": "0b11ed5d-60de-4bb6-a4e7-3da310a2e80c", "lineWidthMinPixels": 1, "opacity": 0.8, "pickable": true, "radiusMaxPixels": 100, "radiusMinPixels": 10, "radiusScale": 100, "stroked": true}, {"@@type": "ArcLayer", "autoHighlight": true, "data": [{"lat_s": 7.221319, "lat_t": 6.188803, "lng_s": 80.055323, "lng_t": 80.519159}, {"lat_s": 7.018444, "lat_t": 8.330539, "lng_s": 80.760429, "lng_t": 80.411661}, {"lat_s": 6.188803, "lat_t": 7.018444, "lng_s": 80.519159, "lng_t": 80.760429}, {"lat_s": 8.330539, "lat_t": 7.221319, "lng_s": 80.411661, "lng_t": 80.055323}, {"lat_s": 8.016468, "lat_t": 8.330539, "lng_s": 80.920919, "lng_t": 80.411661}, {"lat_s": 7.499714, "lat_t": 6.978419, "lng_s": 80.62479, "lng_t": 81.246235}, {"lat_s": 6.978419, "lat_t": 8.016468, "lng_s": 81.246235, "lng_t": 80.920919}, {"lat_s": 8.330539, "lat_t": 7.499714, "lng_s": 80.411661, "lng_t": 80.62479}, {"lat_s": 9.360379, "lat_t": 9.045005, "lng_s": 80.39171, "lng_t": 80.518868}, {"lat_s": 9.045005, "lat_t": 9.360379, "lng_s": 80.518868, "lng_t": 80.39171}], "getSourceColor": [25, 250, 224], "getSourcePosition": "@@=[lng_s, lat_s]", "getTargetColor": [25, 36, 250], "getTargetPosition": "@@=[lng_t, lat_t]", "getTilt": 15, "getWidth": 5, "id": "0e4f1225-215d-4862-9538-228634771338", "pickable": false}], "mapStyle": "mapbox://styles/mapbox/light-v9", "views": [{"@@type": "MapView", "controller": true}]};
+    const MAPBOX_API_KEY = 'pk.eyJ1IjoicGNhbXBvbHVjY2kiLCJhIjoiY2toYTg2bTFxMGg3aTJ5bGhwZWhmMDg0bCJ9.ViTFJLTd8KTj_8MZK0zYWA';
+    const tooltip = {'html': '<b>{type} ID:</b> {id}', 'style': {'color': 'white'}};
+    const customLibraries = null;
+
+    const deck = createDeck({
+      mapboxApiKey: MAPBOX_API_KEY,
+      container: document.getElementById('deck-container'),
+      jsonInput,
+      tooltip,
+      customLibraries
+    });
+
+  </script>
+</html>
