@@ -19,7 +19,7 @@ The code is organized as follows:
 
 - The various nodes and their features are inserted in `database/nodes.xlsx`
 - Nodes and additional factors (e.g. wind) are coupled and translated into edge variables with `reframe.py`
-- The Mixed Integer Prgramming model is defined and solved through Gurobi in `vrp.py`
+- The Mixed Integer Programming model is defined and solved through Gurobi in `vrp.py`
 - The solution is translated and plotted alongside the nodes in a MapBox plot with `plotter.py`
 
 The various processes can be tuned and run in series safely in `main.py`. This allows to avoid any conflict in the 
